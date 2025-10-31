@@ -109,19 +109,19 @@ void SendWorldMessage(Player* sender, const std::string msg, int team) {
 
     if (!WC_Config.Enabled)
     {
-        ChatHandler(sender->GetSession()).PSendSysMessage(Acore::StringFormat("[WC] {}World Chat System is disabled.|r", WORLD_CHAT_RED));
+           ChatHandler(sender->GetSession()).PSendSysMessage(Acore::StringFormat("[WC] {}Система мирового чата отключена.|r", WORLD_CHAT_RED));
         return;
     }
 
     if (!sender->CanSpeak())
     {
-        ChatHandler(sender->GetSession()).PSendSysMessage(Acore::StringFormat("[WC] {}You can't use World Chat while muted!|r", WORLD_CHAT_RED));
+           ChatHandler(sender->GetSession()).PSendSysMessage(Acore::StringFormat("[WC] {}Вы не можете использовать мировой чат, пока на вас действует мут!|r", WORLD_CHAT_RED));
         return;
     }
 
     if (!WorldChat[sender->GetGUID().GetCounter()].chat)
     {
-        ChatHandler(sender->GetSession()).PSendSysMessage(Acore::StringFormat("[WC] {}World Chat is hidden. (.chat off)|r", WORLD_CHAT_RED));
+           ChatHandler(sender->GetSession()).PSendSysMessage(Acore::StringFormat("[WC] {}Мировой чат скрыт. (.chat off)|r", WORLD_CHAT_RED));
         return;
     }
 
@@ -219,18 +219,18 @@ public:
         uint64 guid = player->GetGUID().GetCounter();
 
         if (!WC_Config.Enabled) {
-            ChatHandler(player->GetSession()).PSendSysMessage(Acore::StringFormat("[WC] {}World Chat System is disabled.|r", WORLD_CHAT_RED));
+              ChatHandler(player->GetSession()).PSendSysMessage(Acore::StringFormat("[WC] {}Система мирового чата отключена.|r", WORLD_CHAT_RED));
             return true;
         }
 
         if (WorldChat[guid].chat) {
-            ChatHandler(player->GetSession()).PSendSysMessage(Acore::StringFormat("[WC] {}World Chat is already visible.|r", WORLD_CHAT_RED));
+                ChatHandler(player->GetSession()).PSendSysMessage(Acore::StringFormat("[WC] {}Мировой чат уже отображается.|r", WORLD_CHAT_RED));
             return true;
         }
 
         WorldChat[guid].chat = 1;
 
-        ChatHandler(player->GetSession()).PSendSysMessage(Acore::StringFormat("[WC] {}World Chat is now visible.|r", WORLD_CHAT_GREEN));
+            ChatHandler(player->GetSession()).PSendSysMessage(Acore::StringFormat("[WC] {}Мировой чат теперь отображается.|r", WORLD_CHAT_GREEN));
 
         return true;
     };
@@ -242,19 +242,19 @@ public:
 
         if (!sConfigMgr->GetOption<bool>("World_Chat.Enable", true))
         {
-            ChatHandler(player->GetSession()).PSendSysMessage(Acore::StringFormat("[WC] {}World Chat System is disabled.|r", WORLD_CHAT_RED));
+              ChatHandler(player->GetSession()).PSendSysMessage(Acore::StringFormat("[WC] {}Система мирового чата отключена.|r", WORLD_CHAT_RED));
             return true;
         }
 
         if (!WorldChat[guid].chat)
         {
-            ChatHandler(player->GetSession()).PSendSysMessage(Acore::StringFormat("[WC] {}World Chat is already hidden.|r", WORLD_CHAT_RED));
+                ChatHandler(player->GetSession()).PSendSysMessage(Acore::StringFormat("[WC] {}Мировой чат уже скрыт.|r", WORLD_CHAT_RED));
             return true;
         }
 
         WorldChat[guid].chat = 0;
 
-        ChatHandler(player->GetSession()).PSendSysMessage(Acore::StringFormat("[WC] {}World Chat is now hidden.|r", WORLD_CHAT_GREEN));
+            ChatHandler(player->GetSession()).PSendSysMessage(Acore::StringFormat("[WC] {}Мировой чат теперь скрыт.|r", WORLD_CHAT_GREEN));
 
         return true;
     };
@@ -291,7 +291,7 @@ public:
         // Announce Module
         if (WC_Config.Enabled && WC_Config.Announce)
         {
-            ChatHandler(player->GetSession()).SendSysMessage(("This server is running the |cff4CFF00WorldChat |rmodule. Use .chat" + ((WC_Config.ChannelName != "") ? " or use /join " + WC_Config.ChannelName : "") + " to communicate"+ ((!WC_Config.CrossFaction) ? " with your faction." : ".")));
+              ChatHandler(player->GetSession()).SendSysMessage(("На этом сервере активирована система |cff4CFF00Глобального Чата|r." + ((WC_Config.ChannelName != "") ? " используйте /join " + WC_Config.ChannelName : "") + " чтобы присоединиться" + ((!WC_Config.CrossFaction) ? " к глобальному чату." : ".")));
         }
     }
 
