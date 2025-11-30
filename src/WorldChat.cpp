@@ -345,24 +345,6 @@ public:
             // Add bot to banned list
             bannedBotGuids.insert(player->GetGUID().GetCounter());
             
-            // Ban bot from World channel to prevent joining
-            if (WC_Config.ChannelName != "")
-            {
-                if (ChannelMgr* cMgr = ChannelMgr::forTeam(player->GetTeamId()))
-                {
-                    if (Channel* channel = cMgr->GetJoinChannel(WC_Config.ChannelName, 0))
-                    {
-                        // Ban the bot permanently from the channel
-                        channel->Ban(player, "");
-                        
-                        // Also immediately leave if somehow in channel
-                        if (cMgr->GetChannel(WC_Config.ChannelName, player))
-                        {
-                            channel->LeaveChannel(player, false);
-                        }
-                    }
-                }
-            }
             return; // Don't announce to bots
         }
 
@@ -397,9 +379,10 @@ public:
         if (WC_Config.ChannelName != "" && lang != LANG_ADDON && channel && channel->GetName() == WC_Config.ChannelName)
         {
             // Block bots from using world chat channel
-            if (IsPlayerBot(player))
+            if (IsPlayerBot(player) || bannedBotGuids.find(player->GetGUID().GetCounter()) != bannedBotGuids.end())
             {
                 msg = ""; // Clear message
+                channel->LeaveChannel(player, false); // Force leave
                 return;
             }
 
@@ -413,8 +396,9 @@ public:
         // Block bots from joining/using World channel
         if (channel && WC_Config.ChannelName != "" && channel->GetName() == WC_Config.ChannelName)
         {
-            if (IsPlayerBot(player))
+            if (IsPlayerBot(player) || bannedBotGuids.find(player->GetGUID().GetCounter()) != bannedBotGuids.end())
             {
+                channel->LeaveChannel(player, false); // Force leave
                 return false; // Block bots
             }
         }
