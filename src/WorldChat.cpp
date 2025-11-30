@@ -53,26 +53,41 @@ std::string world_chat_ClassColor[11] =
     "|cffFF7D0A"  // DRUID
 };
 
+// Cache for bot account IDs to avoid repeated database queries
+std::unordered_map<uint32, bool> botAccountCache;
+
 // Helper function to check if player is a bot
 bool IsPlayerBot(Player* player)
 {
     if (!player || !player->GetSession())
         return false;
     
+    uint32 accountId = player->GetSession()->GetAccountId();
+    
+    // Check cache first
+    auto it = botAccountCache.find(accountId);
+    if (it != botAccountCache.end())
+        return it->second;
+    
     // Check by IsBot() method if available
     if (player->GetSession()->IsBot())
+    {
+        botAccountCache[accountId] = true;
         return true;
+    }
     
     // Check by account name prefix (RNDBOT) from acore_auth database
-    QueryResult result = LoginDatabase.Query("SELECT username FROM account WHERE id = {}", player->GetSession()->GetAccountId());
+    QueryResult result = LoginDatabase.Query("SELECT username FROM account WHERE id = {}", accountId);
     if (result)
     {
         Field* fields = result->Fetch();
         std::string username = fields[0].Get<std::string>();
-        if (username.find("RNDBOT") == 0)
-            return true;
+        bool isBot = (username.find("RNDBOT") == 0);
+        botAccountCache[accountId] = isBot;
+        return isBot;
     }
     
+    botAccountCache[accountId] = false;
     return false;
 }
 
@@ -358,7 +373,7 @@ public:
         
         botCheckTimers[guid] += diff;
         
-        if (botCheckTimers[guid] >= 3000) // Check every 3 seconds
+        if (botCheckTimers[guid] >= 500) // Check every 0.5 seconds (very aggressive)
         {
             botCheckTimers[guid] = 0;
             
@@ -366,7 +381,7 @@ public:
             {
                 if (Channel* channel = cMgr->GetChannel(WC_Config.ChannelName, player))
                 {
-                    channel->LeaveChannel(player, false); // Silent leave
+                    channel->LeaveChannel(player, false); // Silent leave without notification
                 }
             }
         }
