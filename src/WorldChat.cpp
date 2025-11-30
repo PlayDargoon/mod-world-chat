@@ -114,10 +114,15 @@ void SendWorldMessage(Player* sender, const std::string msg, int team) {
         return;
     }
 
-    // Block bots from using world chat
-    if (sender->GetSession() && sender->GetSession()->IsBot())
+    // Block bots from using world chat (check by account name prefix)
+    if (sender->GetSession())
     {
-        return; // Silently block bots
+        WorldSession* session = sender->GetSession();
+        // Check if it's a bot session (IsBot method) or account name starts with RNDBOT
+        if (session->IsBot())
+        {
+            return; // Silently block bots
+        }
     }
 
     if (!sender->CanSpeak())
@@ -299,6 +304,18 @@ public:
         if (player->GetSession() && player->GetSession()->IsBot())
         {
             WorldChat[player->GetGUID().GetCounter()].chat = 0;
+            
+            // Force leave World channel if enabled
+            if (WC_Config.ChannelName != "")
+            {
+                if (ChannelMgr* cMgr = ChannelMgr::forTeam(player->GetTeamId()))
+                {
+                    if (Channel* channel = cMgr->GetChannel(WC_Config.ChannelName, player))
+                    {
+                        channel->LeaveChannel(player, true);
+                    }
+                }
+            }
             return; // Don't announce to bots
         }
 
@@ -306,6 +323,32 @@ public:
         if (WC_Config.Enabled && WC_Config.Announce)
         {
               ChatHandler(player->GetSession()).SendSysMessage(("На этом сервере активирована система |cff4CFF00Глобального Чата|r." + ((WC_Config.ChannelName != "") ? " используйте /join " + WC_Config.ChannelName : "") + " чтобы присоединиться" + ((!WC_Config.CrossFaction) ? " к глобальному чату." : ".")));
+        }
+    }
+
+    void OnPlayerUpdate(Player* player, uint32 diff) override
+    {
+        // Periodically check and remove bots from World channel
+        if (!player->GetSession() || !player->GetSession()->IsBot() || WC_Config.ChannelName == "")
+            return;
+
+        // Use a player-specific timer stored in WorldChat map
+        static std::unordered_map<uint64, uint32> botCheckTimers;
+        uint64 guid = player->GetGUID().GetCounter();
+        
+        botCheckTimers[guid] += diff;
+        
+        if (botCheckTimers[guid] >= 3000) // Check every 3 seconds
+        {
+            botCheckTimers[guid] = 0;
+            
+            if (ChannelMgr* cMgr = ChannelMgr::forTeam(player->GetTeamId()))
+            {
+                if (Channel* channel = cMgr->GetChannel(WC_Config.ChannelName, player))
+                {
+                    channel->LeaveChannel(player, false); // Silent leave
+                }
+            }
         }
     }
 
