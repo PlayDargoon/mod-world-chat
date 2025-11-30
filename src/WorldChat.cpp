@@ -362,7 +362,7 @@ public:
     }
 
     // Intercept channel joining attempts
-    void OnBeforeUpdate(Player* player, uint32 /*diff*/) override
+    void OnUpdate(Player* player, uint32 /*diff*/) override
     {
         // Check if bot is in World channel and remove immediately
         if (!IsPlayerBot(player) || WC_Config.ChannelName == "")
