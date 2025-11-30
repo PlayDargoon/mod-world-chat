@@ -323,6 +323,19 @@ public:
             msg = -1;
         }
     }
+
+    bool OnPlayerCanUseChat(Player* player, uint32 /*type*/, uint32 /*language*/, std::string& /*msg*/, Channel* channel) override
+    {
+        // Block bots from joining/using World channel
+        if (channel && WC_Config.ChannelName != "" && channel->GetName() == WC_Config.ChannelName)
+        {
+            if (player->GetSession() && player->GetSession()->IsBot())
+            {
+                return false; // Block bots
+            }
+        }
+        return true; // Allow others
+    }
 };
 
 void AddSC_WorldChatScripts()
