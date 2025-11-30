@@ -355,19 +355,6 @@ public:
         }
     }
 
-    void OnPlayerJoinChannel(Player* player, Channel* channel) override
-    {
-        // Block bots from joining World channel completely
-        if (channel && WC_Config.ChannelName != "" && channel->GetName() == WC_Config.ChannelName)
-        {
-            if (IsPlayerBot(player) || bannedBotGuids.find(player->GetGUID().GetCounter()) != bannedBotGuids.end())
-            {
-                // Immediately kick bot from channel - no notifications sent
-                channel->LeaveChannel(player, false);
-            }
-        }
-    }
-
     void OnPlayerUpdate(Player* player, uint32 /*diff*/) override
     {
         // Double-check: if bot somehow got into channel, remove immediately
