@@ -16,6 +16,8 @@
 #include "Common.h"
 #include "WorldSessionMgr.h"
 #include "Config.h"
+#include "DatabaseEnv.h"
+#include "QueryResult.h"
 #include <unordered_map>
 
 #if AC_COMPILER == AC_COMPILER_GNU
@@ -48,8 +50,32 @@ std::string world_chat_ClassColor[11] =
     "|cff40C7EB", // MAGE
     "|cff8787ED", // WARLOCK
     "", // ADDED IN MOP FOR MONK - NOT USED
-    "|cffFF7D0A", // DRUID
+    "|cffFF7D0A"  // DRUID
 };
+
+// Helper function to check if player is a bot
+bool IsPlayerBot(Player* player)
+{
+    if (!player || !player->GetSession())
+        return false;
+    
+    // Check by IsBot() method if available
+    if (player->GetSession()->IsBot())
+        return true;
+    
+    // Check by account name prefix (RNDBOT)
+    std::string accountName = player->GetSession()->GetPlayerName();
+    QueryResult result = LoginDatabase.Query("SELECT username FROM account WHERE id = {}", player->GetSession()->GetAccountId());
+    if (result)
+    {
+        Field* fields = result->Fetch();
+        std::string username = fields[0].Get<std::string>();
+        if (username.find("RNDBOT") == 0)
+            return true;
+    }
+    
+    return false;
+}
 
 /* Ranks */
 std::string world_chat_GM_RANKS[4] =
@@ -114,15 +140,10 @@ void SendWorldMessage(Player* sender, const std::string msg, int team) {
         return;
     }
 
-    // Block bots from using world chat (check by account name prefix)
-    if (sender->GetSession())
+    // Block bots from using world chat
+    if (IsPlayerBot(sender))
     {
-        WorldSession* session = sender->GetSession();
-        // Check if it's a bot session (IsBot method) or account name starts with RNDBOT
-        if (session->IsBot())
-        {
-            return; // Silently block bots
-        }
+        return; // Silently block bots
     }
 
     if (!sender->CanSpeak())
@@ -301,7 +322,7 @@ public:
     void OnPlayerLogin(Player* player) override
     {
         // Block bots from world chat on login
-        if (player->GetSession() && player->GetSession()->IsBot())
+        if (IsPlayerBot(player))
         {
             WorldChat[player->GetGUID().GetCounter()].chat = 0;
             
@@ -329,7 +350,7 @@ public:
     void OnPlayerUpdate(Player* player, uint32 diff) override
     {
         // Periodically check and remove bots from World channel
-        if (!player->GetSession() || !player->GetSession()->IsBot() || WC_Config.ChannelName == "")
+        if (!IsPlayerBot(player) || WC_Config.ChannelName == "")
             return;
 
         // Use a player-specific timer stored in WorldChat map
@@ -357,7 +378,7 @@ public:
         if (WC_Config.ChannelName != "" && lang != LANG_ADDON && channel && channel->GetName() == WC_Config.ChannelName)
         {
             // Block bots from using world chat channel
-            if (player->GetSession() && player->GetSession()->IsBot())
+            if (IsPlayerBot(player))
             {
                 msg = ""; // Clear message
                 return;
@@ -373,7 +394,7 @@ public:
         // Block bots from joining/using World channel
         if (channel && WC_Config.ChannelName != "" && channel->GetName() == WC_Config.ChannelName)
         {
-            if (player->GetSession() && player->GetSession()->IsBot())
+            if (IsPlayerBot(player))
             {
                 return false; // Block bots
             }
