@@ -114,13 +114,9 @@ void SendWorldMessage(Player* sender, const std::string msg, int team) {
     }
 
     // Block bots from using world chat
-    if (sender->GetSession())
+    if (sender->GetSession() && sender->GetSession()->IsBot())
     {
-        std::string accountName = sender->GetSession()->GetAccountName();
-        if (accountName.substr(0, 6) == "RNDBOT")
-        {
-            return; // Silently block bots
-        }
+        return; // Silently block bots
     }
 
     if (!sender->CanSpeak())
@@ -299,14 +295,10 @@ public:
     void OnPlayerLogin(Player* player)
     {
         // Block bots from world chat on login
-        if (player->GetSession())
+        if (player->GetSession() && player->GetSession()->IsBot())
         {
-            std::string accountName = player->GetSession()->GetAccountName();
-            if (accountName.substr(0, 6) == "RNDBOT")
-            {
-                WorldChat[player->GetGUID().GetCounter()].chat = 0;
-                return; // Don't announce to bots
-            }
+            WorldChat[player->GetGUID().GetCounter()].chat = 0;
+            return; // Don't announce to bots
         }
 
         // Announce Module
@@ -321,14 +313,10 @@ public:
         if (WC_Config.ChannelName != "" && lang != LANG_ADDON && channel && channel->GetName() == WC_Config.ChannelName)
         {
             // Block bots from using world chat channel
-            if (player->GetSession())
+            if (player->GetSession() && player->GetSession()->IsBot())
             {
-                std::string accountName = player->GetSession()->GetAccountName();
-                if (accountName.substr(0, 6) == "RNDBOT")
-                {
-                    msg = ""; // Clear message
-                    return;
-                }
+                msg = ""; // Clear message
+                return;
             }
 
             SendWorldMessage(player, msg, -1);
