@@ -292,7 +292,7 @@ public:
 
     WorldChat_Announce() : PlayerScript("WorldChat_Announce") {}
 
-    void OnPlayerLogin(Player* player)
+    void OnPlayerLogin(Player* player) override
     {
         // Block bots from world chat on login
         if (player->GetSession() && player->GetSession()->IsBot())
@@ -308,7 +308,7 @@ public:
         }
     }
 
-    void OnPlayerChat(Player* player, uint32 /*type*/, uint32 lang, std::string& msg, Channel* channel)
+    void OnPlayerChat(Player* player, uint32 /*type*/, uint32 lang, std::string& msg, Channel* channel) override
     {
         if (WC_Config.ChannelName != "" && lang != LANG_ADDON && channel && channel->GetName() == WC_Config.ChannelName)
         {
