@@ -347,7 +347,7 @@ public:
                 {
                     if (Channel* channel = cMgr->GetChannel(WC_Config.ChannelName, player))
                     {
-                        channel->LeaveChannel(player, true);
+                        channel->LeaveChannel(player, false);
                     }
                 }
             }
@@ -361,28 +361,20 @@ public:
         }
     }
 
-    void OnPlayerUpdate(Player* player, uint32 diff) override
+    // Intercept channel joining attempts
+    void OnBeforeUpdate(Player* player, uint32 /*diff*/) override
     {
-        // Periodically check and remove bots from World channel
+        // Check if bot is in World channel and remove immediately
         if (!IsPlayerBot(player) || WC_Config.ChannelName == "")
             return;
-
-        // Use a player-specific timer stored in WorldChat map
-        static std::unordered_map<uint64, uint32> botCheckTimers;
-        uint64 guid = player->GetGUID().GetCounter();
-        
-        botCheckTimers[guid] += diff;
-        
-        if (botCheckTimers[guid] >= 500) // Check every 0.5 seconds (very aggressive)
-        {
-            botCheckTimers[guid] = 0;
             
-            if (ChannelMgr* cMgr = ChannelMgr::forTeam(player->GetTeamId()))
+        if (ChannelMgr* cMgr = ChannelMgr::forTeam(player->GetTeamId()))
+        {
+            // Check every frame if bot is in the channel
+            if (Channel* channel = cMgr->GetChannel(WC_Config.ChannelName, player))
             {
-                if (Channel* channel = cMgr->GetChannel(WC_Config.ChannelName, player))
-                {
-                    channel->LeaveChannel(player, false); // Silent leave without notification
-                }
+                // Immediately kick bot without any notification
+                channel->LeaveChannel(player, false);
             }
         }
     }
