@@ -299,18 +299,6 @@ public:
         if (player->GetSession() && player->GetSession()->IsBot())
         {
             WorldChat[player->GetGUID().GetCounter()].chat = 0;
-            
-            // Force leave World channel if bot somehow joined
-            if (WC_Config.ChannelName != "")
-            {
-                if (ChannelMgr* cMgr = ChannelMgr::forTeam(player->GetTeamId()))
-                {
-                    if (Channel* channel = cMgr->GetChannel(WC_Config.ChannelName, player))
-                    {
-                        channel->LeaveChannel(player, true);
-                    }
-                }
-            }
             return; // Don't announce to bots
         }
 
@@ -318,29 +306,6 @@ public:
         if (WC_Config.Enabled && WC_Config.Announce)
         {
               ChatHandler(player->GetSession()).SendSysMessage(("На этом сервере активирована система |cff4CFF00Глобального Чата|r." + ((WC_Config.ChannelName != "") ? " используйте /join " + WC_Config.ChannelName : "") + " чтобы присоединиться" + ((!WC_Config.CrossFaction) ? " к глобальному чату." : ".")));
-        }
-    }
-
-    void OnPlayerUpdate(Player* player, uint32 /*diff*/) override
-    {
-        // Periodically kick bots from World channel
-        static uint32 checkTimer = 0;
-        checkTimer += 1;
-        
-        if (checkTimer >= 5000) // Check every ~5 seconds
-        {
-            checkTimer = 0;
-            
-            if (player->GetSession() && player->GetSession()->IsBot() && WC_Config.ChannelName != "")
-            {
-                if (ChannelMgr* cMgr = ChannelMgr::forTeam(player->GetTeamId()))
-                {
-                    if (Channel* channel = cMgr->GetChannel(WC_Config.ChannelName, player))
-                    {
-                        channel->LeaveChannel(player, false); // Silent leave
-                    }
-                }
-            }
         }
     }
 
