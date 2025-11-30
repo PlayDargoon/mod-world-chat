@@ -55,6 +55,8 @@ std::string world_chat_ClassColor[11] =
 
 // Cache for bot account IDs to avoid repeated database queries
 std::unordered_map<uint32, bool> botAccountCache;
+// Set of banned bot GUIDs in World channel
+std::unordered_set<uint64> bannedBotGuids;
 
 // Helper function to check if player is a bot
 bool IsPlayerBot(Player* player)
@@ -340,6 +342,9 @@ public:
         {
             WorldChat[player->GetGUID().GetCounter()].chat = 0;
             
+            // Add bot to banned list
+            bannedBotGuids.insert(player->GetGUID().GetCounter());
+            
             // Ban bot from World channel to prevent joining
             if (WC_Config.ChannelName != "")
             {
@@ -349,6 +354,12 @@ public:
                     {
                         // Ban the bot permanently from the channel
                         channel->Ban(player->GetGUID(), "");
+                        
+                        // Also immediately leave if somehow in channel
+                        if (cMgr->GetChannel(WC_Config.ChannelName, player))
+                        {
+                            channel->LeaveChannel(player, false);
+                        }
                     }
                 }
             }
@@ -362,25 +373,24 @@ public:
         }
     }
 
-    // Remove the update hook since we're using ban instead
-    /*
-    void OnPlayerUpdate(Player* player, uint32 diff) override
+    void OnPlayerUpdate(Player* player, uint32 /*diff*/) override
     {
-        // Check if bot is in World channel and remove immediately
-        if (!IsPlayerBot(player) || WC_Config.ChannelName == "")
+        // Double-check: if bot somehow got into channel, remove immediately
+        if (bannedBotGuids.find(player->GetGUID().GetCounter()) == bannedBotGuids.end())
             return;
             
-        if (ChannelMgr* cMgr = ChannelMgr::forTeam(player->GetTeamId()))
+        if (WC_Config.ChannelName != "")
         {
-            // Check every frame if bot is in the channel
-            if (Channel* channel = cMgr->GetChannel(WC_Config.ChannelName, player))
+            if (ChannelMgr* cMgr = ChannelMgr::forTeam(player->GetTeamId()))
             {
-                // Immediately kick bot without any notification
-                channel->LeaveChannel(player, false);
+                if (Channel* channel = cMgr->GetChannel(WC_Config.ChannelName, player))
+                {
+                    // Bot is in channel - remove silently
+                    channel->LeaveChannel(player, false);
+                }
             }
         }
     }
-    */
 
     void OnPlayerChat(Player* player, uint32 /*type*/, uint32 lang, std::string& msg, Channel* channel) override
     {
