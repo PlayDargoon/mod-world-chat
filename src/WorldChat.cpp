@@ -63,8 +63,7 @@ bool IsPlayerBot(Player* player)
     if (player->GetSession()->IsBot())
         return true;
     
-    // Check by account name prefix (RNDBOT)
-    std::string accountName = player->GetSession()->GetPlayerName();
+    // Check by account name prefix (RNDBOT) from acore_auth database
     QueryResult result = LoginDatabase.Query("SELECT username FROM account WHERE id = {}", player->GetSession()->GetAccountId());
     if (result)
     {
