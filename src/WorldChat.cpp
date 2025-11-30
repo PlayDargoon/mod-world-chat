@@ -353,7 +353,7 @@ public:
                     if (Channel* channel = cMgr->GetJoinChannel(WC_Config.ChannelName, 0))
                     {
                         // Ban the bot permanently from the channel
-                        channel->Ban(player->GetGUID(), "");
+                        channel->Ban(player, "");
                         
                         // Also immediately leave if somehow in channel
                         if (cMgr->GetChannel(WC_Config.ChannelName, player))
