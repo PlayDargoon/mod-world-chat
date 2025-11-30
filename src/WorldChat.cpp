@@ -340,14 +340,15 @@ public:
         {
             WorldChat[player->GetGUID().GetCounter()].chat = 0;
             
-            // Force leave World channel if enabled
+            // Ban bot from World channel to prevent joining
             if (WC_Config.ChannelName != "")
             {
                 if (ChannelMgr* cMgr = ChannelMgr::forTeam(player->GetTeamId()))
                 {
-                    if (Channel* channel = cMgr->GetChannel(WC_Config.ChannelName, player))
+                    if (Channel* channel = cMgr->GetJoinChannel(WC_Config.ChannelName, 0))
                     {
-                        channel->LeaveChannel(player, false);
+                        // Ban the bot permanently from the channel
+                        channel->Ban(player->GetGUID(), "");
                     }
                 }
             }
@@ -361,8 +362,9 @@ public:
         }
     }
 
-    // Intercept channel joining attempts
-    void OnPlayerUpdate(Player* player, uint32 /*diff*/) override
+    // Remove the update hook since we're using ban instead
+    /*
+    void OnPlayerUpdate(Player* player, uint32 diff) override
     {
         // Check if bot is in World channel and remove immediately
         if (!IsPlayerBot(player) || WC_Config.ChannelName == "")
@@ -378,6 +380,7 @@ public:
             }
         }
     }
+    */
 
     void OnPlayerChat(Player* player, uint32 /*type*/, uint32 lang, std::string& msg, Channel* channel) override
     {
